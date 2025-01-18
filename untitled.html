@@ -36,6 +36,12 @@
     </div>
   </div>
 
+  <div id="mobileControls" class="absolute bottom-0 left-0 w-full flex justify-center space-x-4 p-4">
+    <button id="moveForwardBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"><i class="fas fa-arrow-up"></i></button>
+    <button id="turnLeftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-left"></i></button>
+    <button id="turnRightBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-right"></i></button>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     // Set up scene, camera, and renderer
@@ -185,6 +191,22 @@
     // Add event listeners for key down/up
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+
+    // Mobile controls event listeners
+    document.getElementById('moveForwardBtn').addEventListener('mousedown', () => moveForward = true);
+    document.getElementById('moveForwardBtn').addEventListener('mouseup', () => moveForward = false);
+    document.getElementById('moveForwardBtn').addEventListener('touchstart', () => moveForward = true);
+    document.getElementById('moveForwardBtn').addEventListener('touchend', () => moveForward = false);
+
+    document.getElementById('turnLeftBtn').addEventListener('mousedown', () => turnLeft = true);
+    document.getElementById('turnLeftBtn').addEventListener('mouseup', () => turnLeft = false);
+    document.getElementById('turnLeftBtn').addEventListener('touchstart', () => turnLeft = true);
+    document.getElementById('turnLeftBtn').addEventListener('touchend', () => turnLeft = false);
+
+    document.getElementById('turnRightBtn').addEventListener('mousedown', () => turnRight = true);
+    document.getElementById('turnRightBtn').addEventListener('mouseup', () => turnRight = false);
+    document.getElementById('turnRightBtn').addEventListener('touchstart', () => turnRight = true);
+    document.getElementById('turnRightBtn').addEventListener('touchend', () => turnRight = false);
 
     // Check collisions with obstacles
     function checkCollisions() {
