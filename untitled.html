@@ -22,6 +22,7 @@
     <div class="flex space-x-4">
       <button id="startGameBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Start Game</button>
       <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Reset Game</button>
+      <button id="controlsBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Controls</button>
     </div>
   </div>
 
@@ -29,6 +30,25 @@
     <button id="turnLeftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-left"></i></button>
     <button id="moveForwardBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"><i class="fas fa-arrow-up"></i></button>
     <button id="turnRightBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="controlsModal" class="flex">
+    <div id="controlsModalContent">
+      <h2 class="text-2xl font-bold mb-4">Controls</h2>
+      <p class="text-lg mb-4">Mobile:</p>
+      <ul class="text-left mb-4">
+        <li><i class="fas fa-arrow-up"></i> Move Forward</li>
+        <li><i class="fas fa-arrow-left"></i> Turn Left</li>
+        <li><i class="fas fa-arrow-right"></i> Turn Right</li>
+      </ul>
+      <p class="text-lg mb-4">Keyboard:</p>
+      <ul class="text-left mb-4">
+        <li>W - Move Forward</li>
+        <li>A - Turn Left</li>
+        <li>D - Turn Right</li>
+      </ul>
+      <button id="closeControlsBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Close</button>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
