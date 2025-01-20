@@ -1,4 +1,4 @@
-<html lang="en">
+<html lang="en"></html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,9 +56,15 @@
     // Set up scene, camera, and renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
+
+    // Add fog to the scene for depth
+    scene.fog = new THREE.Fog(0x000000, 1, 1000);
+    scene.background = new THREE.Color(0x87CEEB); // Sky blue background
 
     // Game Variables
     let car;
@@ -85,40 +91,94 @@
     const obstacles = [];
     const speedBoostZones = [];
 
-    // Create track
+    // Create track with F1-style materials
     function createTrack() {
-      const geometry = new THREE.CylinderGeometry(trackRadius, trackRadius, 1, 50);
-      const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
-      const trackMesh = new THREE.Mesh(geometry, material);
-      trackMesh.rotation.x = Math.PI / 2;
-      trackMesh.position.set(0, 0, -trackLength / 2);
-      scene.add(trackMesh);
+        // Create main track surface
+        const geometry = new THREE.PlaneGeometry(trackRadius * 2, trackLength);
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0x404040,  // Darker gray
+            shininess: 10,
+            specular: 0x333333
+        });
+        
+        const trackMesh = new THREE.Mesh(geometry, material);
+        trackMesh.rotation.x = -Math.PI / 2;
+        trackMesh.position.y = 0;
+        trackMesh.position.z = 0;
+        trackMesh.receiveShadow = true;
+        scene.add(trackMesh);
 
-      // Create walls along the track
-      const wallGeometry = new THREE.BoxGeometry(0.5, 2, trackLength);
-      const wallMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
-      leftWall.position.set(-trackRadius - 0.25, 1, 0);
-      scene.add(leftWall);
-      const rightWall = new THREE.Mesh(wallGeometry, wallMaterial);
-      rightWall.position.set(trackRadius + 0.25, 1, 0);
-      scene.add(rightWall);
+        // Add track markings (white lines)
+        const lineGeometry = new THREE.PlaneGeometry(0.3, trackLength);
+        const lineMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff
+        });
 
-      // Create finish line (goal) at the far end of the track
-      const finishLine = new THREE.BoxGeometry(5, 0.1, 50);  // Increased size for visibility
-      const finishMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });  // Bright green
-      const finishLineMesh = new THREE.Mesh(finishLine, finishMaterial);
-      finishLineMesh.position.set(0, 0.1, trackLength / 2);  // Position at the end of the track
-      scene.add(finishLineMesh);
+        // Left track marking
+        const leftLine = new THREE.Mesh(lineGeometry, lineMaterial);
+        leftLine.rotation.x = -Math.PI / 2;
+        leftLine.position.set(-trackRadius * 0.7, 0.01, 0);
+        scene.add(leftLine);
 
-      // Create speed boost zones
-      createSpeedBoostZone(0, 100);
-      createSpeedBoostZone(0, 300);
+        // Right track marking
+        const rightLine = new THREE.Mesh(lineGeometry, lineMaterial);
+        rightLine.rotation.x = -Math.PI / 2;
+        rightLine.position.set(trackRadius * 0.7, 0.01, 0);
+        scene.add(rightLine);
 
-      // Create obstacles **ensured to be within track bounds**
-      for (let i = 0; i < 10 * currentLevel; i++) {
-        createObstacle();
-      }
+        // Add track kerbs (red and white stripes)
+        const kerbGeometry = new THREE.BoxGeometry(1, 0.2, trackLength);
+        const kerbMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                stripeWidth: { value: 2.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float stripeWidth;
+                void main() {
+                    float stripe = mod(vUv.y * 50.0, stripeWidth);
+                    if(stripe < stripeWidth/2.0) {
+                        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Red
+                    } else {
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White
+                    }
+                }
+            `
+        });
+
+        // Left kerb
+        const leftKerb = new THREE.Mesh(kerbGeometry, kerbMaterial);
+        leftKerb.position.set(-trackRadius - 0.5, 0.1, 0);
+        scene.add(leftKerb);
+
+        // Right kerb
+        const rightKerb = new THREE.Mesh(kerbGeometry, kerbMaterial);
+        rightKerb.position.set(trackRadius + 0.5, 0.1, 0);
+        scene.add(rightKerb);
+
+        // Create finish line
+        const finishLineGeometry = new THREE.PlaneGeometry(trackRadius * 2, 4);
+        const finishLineMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const finishLine = new THREE.Mesh(finishLineGeometry, finishLineMaterial);
+        finishLine.rotation.x = -Math.PI / 2;
+        finishLine.position.set(0, 0.02, trackLength / 2);
+        scene.add(finishLine);
+
+        // Create speed boost zones and obstacles
+        createSpeedBoostZones();
+        createObstacles();
     }
 
     // Create speed boost zone
@@ -132,35 +192,109 @@
     }
 
     // Create obstacles with boundaries
-    function createObstacle() {
-      const x = (Math.random() - 0.5) * trackRadius * 2;
-      const z = (Math.random() - 0.5) * trackLength;
+    function createObstacles() {
+        // Add more obstacles at regular intervals
+        const numberOfObstacles = 20; // Increased from 10 to 20
+        
+        for (let i = 0; i < numberOfObstacles; i++) {
+            // Calculate position to distribute obstacles along the track
+            const z = (-trackLength/2) + (trackLength * (i / numberOfObstacles)) + 20; // +20 to avoid start position
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5); // Random position across track width
+            
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+            const obstacle = new THREE.Mesh(geometry, material);
+            obstacle.position.set(x, 1, z);
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
 
-      const geometry = new THREE.BoxGeometry(2, 2, 2);
-      const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
-      const obstacle = new THREE.Mesh(geometry, material);
-      obstacle.position.set(x, 1, z);
-      scene.add(obstacle);
-      obstacles.push(obstacle);
+        // Add some grouped obstacles for additional challenge
+        for (let i = 0; i < 5; i++) {
+            const groupZ = (-trackLength/2) + (trackLength * ((i + 0.5) / 5));
+            
+            // Create a group of 3 obstacles close to each other
+            for (let j = 0; j < 3; j++) {
+                const x = (Math.random() - 0.5) * (trackRadius * 1.5);
+                const z = groupZ + (Math.random() - 0.5) * 10;
+                
+                const geometry = new THREE.BoxGeometry(2, 2, 2);
+                const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+                const obstacle = new THREE.Mesh(geometry, material);
+                obstacle.position.set(x, 1, z);
+                scene.add(obstacle);
+                obstacles.push(obstacle);
+            }
+        }
     }
 
-    // Create car
+    // Enhanced car creation
     function createCar(color, startPosX, startPosZ) {
-      const carGeometry = new THREE.BoxGeometry(1, 0.5, 2);
-      const carMaterial = new THREE.MeshBasicMaterial({ color: color });
-      const car = new THREE.Mesh(carGeometry, carMaterial);
-      car.position.set(startPosX, 0.25, startPosZ);
-      scene.add(car);
-      return car;
+      const group = new THREE.Group();
+
+      // Main body
+      const bodyGeometry = new THREE.BoxGeometry(1, 0.5, 2);
+      const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        color: color,
+        roughness: 0.3,
+        metalness: 0.8
+      });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.castShadow = true;
+      body.position.y = 0.25;
+      group.add(body);
+
+      // Wheels
+      const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 32);
+      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x202020 });
+      const wheelPositions = [
+        [-0.5, 0, -0.7],
+        [0.5, 0, -0.7],
+        [-0.5, 0, 0.7],
+        [0.5, 0, 0.7]
+      ];
+
+      wheelPositions.forEach(position => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(...position);
+        wheel.castShadow = true;
+        group.add(wheel);
+      });
+
+      group.position.set(startPosX, 0.25, startPosZ);
+      scene.add(group);
+      return group;
     }
 
-    // Add basic light
+    // Enhanced lighting
     function addLights() {
-      const ambientLight = new THREE.AmbientLight(0x404040);
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(5, 5, 5).normalize();
+      // Ambient light
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
       scene.add(ambientLight);
-      scene.add(directionalLight);
+
+      // Directional light (sun)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(100, 100, 50);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 1;
+      dirLight.shadow.camera.far = 500;
+      dirLight.shadow.camera.left = -50;
+      dirLight.shadow.camera.right = 50;
+      dirLight.shadow.camera.top = 50;
+      dirLight.shadow.camera.bottom = -50;
+      scene.add(dirLight);
+
+      // Add some point lights for atmosphere
+      const pointLight1 = new THREE.PointLight(0x00ff00, 0.5, 20);
+      pointLight1.position.set(0, 5, -trackLength / 4);
+      scene.add(pointLight1);
+
+      const pointLight2 = new THREE.PointLight(0x0000ff, 0.5, 20);
+      pointLight2.position.set(0, 5, trackLength / 4);
+      scene.add(pointLight2);
     }
 
     // Handle car movement with friction
@@ -272,7 +406,9 @@
 
     // Reset car position and speed
     function resetCar() {
-      car.position.set(0, 0.25, 0);
+      // Reset to middle of track width, near the start
+      car.position.set(0, 0.25, -trackLength/2 + 10);
+      car.rotation.set(0, 0, 0); // Reset rotation
       carSpeed = 0;
     }
 
@@ -293,29 +429,44 @@
       speedBoostZones.length = 0;
     }
 
-    // Initialize game
+    // Add these functions before init()
+    function createSpeedBoostZones() {
+        // Add speed boost zones at regular intervals
+        for (let z = -trackLength/2; z < trackLength/2; z += 50) {
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
+            createSpeedBoostZone(x, z);
+        }
+    }
+
+    // Update the init function
     function init() {
-      createTrack();
-      car = createCar(0x00ff00, 0, 0); // Starting position
-      addLights();
-      camera.position.z = 10;
-      camera.position.y = 5;
+        // Create scene elements
+        createTrack();
+        
+        // Position car at the middle of the track width, and near the start
+        car = createCar(0x00ff00, 0, -trackLength/2 + 10);
+        
+        // Position camera behind car at start
+        camera.position.set(0, 8, -trackLength/2 - 15);
+        camera.lookAt(car.position);
 
-      // Create record display
-      const recordDisplay = document.createElement('div');
-      recordDisplay.id = 'recordDisplay';
-      document.body.appendChild(recordDisplay);
+        addLights();
 
-      const winnerDisplay = document.createElement('div');
-      winnerDisplay.id = 'winnerDisplay';
-      document.body.appendChild(winnerDisplay);
+        // Create UI elements
+        const recordDisplay = document.createElement('div');
+        recordDisplay.id = 'recordDisplay';
+        document.body.appendChild(recordDisplay);
 
-      // Create speedometer display
-      const speedometer = document.createElement('div');
-      speedometer.id = 'speedometer';
-      document.body.appendChild(speedometer);
+        const winnerDisplay = document.createElement('div');
+        winnerDisplay.id = 'winnerDisplay';
+        document.body.appendChild(winnerDisplay);
 
-      animate();
+        const speedometer = document.createElement('div');
+        speedometer.id = 'speedometer';
+        document.body.appendChild(speedometer);
+
+        // Start animation loop
+        animate();
     }
 
     // Animation loop
