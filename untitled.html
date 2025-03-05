@@ -10,7 +10,6 @@
     canvas { display: block; }
     #recordDisplay { position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; }
     #winnerDisplay { position: absolute; top: 50px; left: 10px; color: yellow; font-size: 24px; }
-    #speedometer { position: absolute; bottom: 10px; right: 10px; color: white; font-size: 18px; }
     #controlsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; }
     #controlsModalContent { background: white; padding: 20px; border-radius: 8px; text-align: center; }
   </style>
@@ -69,16 +68,18 @@
     // Game Variables
     let car;
     let carSpeed = 0;
-    let maxSpeed = 0.5; // Increased max speed
+    let maxSpeed = 0.5;
     let carRotationSpeed = 0.05;
-    let carAcceleration = 0.05; // Increased acceleration
-    let carFriction = 0.98; // Slightly reduced friction
+    let carAcceleration = 0.05;
+    let carFriction = 0.98;
     let finishLinePassed = false;
     let raceStartTime = null;
     let bestTime = null;
     let lapCount = 0;
     let gameOver = false;
     let currentLevel = 1;
+    let movingObstacles = [];
+    let score = 0;
 
     // Control states for the player
     let moveForward = false;
@@ -193,13 +194,12 @@
 
     // Create obstacles with boundaries
     function createObstacles() {
-        // Add more obstacles at regular intervals
-        const numberOfObstacles = 20; // Increased from 10 to 20
+        // Static obstacles
+        const numberOfObstacles = 15; // Reduced number of static obstacles
         
         for (let i = 0; i < numberOfObstacles; i++) {
-            // Calculate position to distribute obstacles along the track
-            const z = (-trackLength/2) + (trackLength * (i / numberOfObstacles)) + 20; // +20 to avoid start position
-            const x = (Math.random() - 0.5) * (trackRadius * 1.5); // Random position across track width
+            const z = (-trackLength/2) + (trackLength * (i / numberOfObstacles)) + 20;
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
             
             const geometry = new THREE.BoxGeometry(2, 2, 2);
             const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
@@ -209,22 +209,27 @@
             obstacles.push(obstacle);
         }
 
-        // Add some grouped obstacles for additional challenge
-        for (let i = 0; i < 5; i++) {
-            const groupZ = (-trackLength/2) + (trackLength * ((i + 0.5) / 5));
+        // Moving obstacles
+        const numberOfMovingObstacles = 10;
+        
+        for (let i = 0; i < numberOfMovingObstacles; i++) {
+            const z = (-trackLength/2) + (trackLength * (i / numberOfMovingObstacles)) + 20;
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
             
-            // Create a group of 3 obstacles close to each other
-            for (let j = 0; j < 3; j++) {
-                const x = (Math.random() - 0.5) * (trackRadius * 1.5);
-                const z = groupZ + (Math.random() - 0.5) * 10;
-                
-                const geometry = new THREE.BoxGeometry(2, 2, 2);
-                const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
-                const obstacle = new THREE.Mesh(geometry, material);
-                obstacle.position.set(x, 1, z);
-                scene.add(obstacle);
-                obstacles.push(obstacle);
-            }
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for moving obstacles
+            const obstacle = new THREE.Mesh(geometry, material);
+            obstacle.position.set(x, 1, z);
+            
+            // Add movement properties
+            obstacle.movement = {
+                direction: Math.random() > 0.5 ? 1 : -1, // Random initial direction
+                speed: 0.1 + Math.random() * 0.1, // Random speed between 0.1 and 0.2
+                range: trackRadius * 0.8 // Movement range
+            };
+            
+            scene.add(obstacle);
+            movingObstacles.push(obstacle);
         }
     }
 
@@ -353,7 +358,7 @@
 
     // Check collisions with obstacles
     function checkCollisions() {
-      obstacles.forEach((obstacle) => {
+      [...obstacles, ...movingObstacles].forEach((obstacle) => {
         if (car.position.distanceTo(obstacle.position) < 2) {
           resetCar();
         }
@@ -375,10 +380,19 @@
     function checkFinishLine() {
       if (!finishLinePassed && car.position.z > trackLength / 2) {
         finishLinePassed = true;
-        raceStartTime = Date.now();
+        if (raceStartTime === null) { // Ensure raceStartTime is set only once
+          raceStartTime = Date.now(); // Start timing when crossing the finish line
+        }
         lapCount++;
-        nextLevel();
+        calculateScore(); // Calculate score when the finish line is crossed
       }
+    }
+
+    // Calculate score and display it
+    function calculateScore() {
+      const raceTime = (Date.now() - raceStartTime) / 1000; // Calculate race time
+      score = (raceTime / currentLevel) * 10; // Calculate score based on time and level
+      displayScore(); // Show score after completing the level
     }
 
     // Update records
@@ -397,35 +411,63 @@
       document.getElementById('recordDisplay').innerText = recordText;
     }
 
-    // Display speedometer
-    function displaySpeedometer() {
-      const speedKmh = (carSpeed / maxSpeed) * 200; // Convert to km/h
-      const speedText = `Speed: ${speedKmh.toFixed(2)} km/h`;
-      document.getElementById('speedometer').innerText = speedText;
-    }
-
     // Reset car position and speed
     function resetCar() {
       // Reset to middle of track width, near the start
       car.position.set(0, 0.25, -trackLength/2 + 10);
       car.rotation.set(0, 0, 0); // Reset rotation
       carSpeed = 0;
+      raceStartTime = null; // Reset raceStartTime when the car is reset
     }
 
     // Move to the next level
     function nextLevel() {
-      currentLevel++;
       finishLinePassed = false;
       resetCar();
       clearTrack();
       createTrack();
     }
 
+    // Create a function to display the score in a modal
+    function displayScore() {
+      const scoreModal = document.createElement('div');
+      scoreModal.id = 'scoreModal';
+      scoreModal.style.position = 'fixed';
+      scoreModal.style.top = '50%';
+      scoreModal.style.left = '50%';
+      scoreModal.style.transform = 'translate(-50%, -50%)';
+      scoreModal.style.background = 'rgba(255, 255, 255, 0.9)';
+      scoreModal.style.padding = '20px';
+      scoreModal.style.borderRadius = '8px';
+      scoreModal.style.textAlign = 'center';
+      scoreModal.innerHTML = `
+          <h2 class="text-2xl font-bold mb-4">Level Complete!</h2>
+          <p class="text-lg mb-4">Your Score: ${score.toFixed(2)}</p>
+          <button id="nextLevelBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Next Level</button>
+          <button id="retryLevelBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Retry Level</button>
+      `;
+      document.body.appendChild(scoreModal);
+
+      // Event listener for next level button
+      document.getElementById('nextLevelBtn').addEventListener('click', () => {
+          document.body.removeChild(scoreModal);
+          nextLevel(); // Proceed to the next level
+      });
+
+      // Event listener for retry level button
+      document.getElementById('retryLevelBtn').addEventListener('click', () => {
+          document.body.removeChild(scoreModal);
+          resetCar(); // Reset car to retry the level
+      });
+    }
+
     // Clear the track
     function clearTrack() {
       obstacles.forEach(obstacle => scene.remove(obstacle));
+      movingObstacles.forEach(obstacle => scene.remove(obstacle));
       speedBoostZones.forEach(zone => scene.remove(zone));
       obstacles.length = 0;
+      movingObstacles.length = 0;
       speedBoostZones.length = 0;
     }
 
@@ -436,6 +478,22 @@
             const x = (Math.random() - 0.5) * (trackRadius * 1.5);
             createSpeedBoostZone(x, z);
         }
+    }
+
+    // Add this new function to update moving obstacles
+    function updateMovingObstacles() {
+        movingObstacles.forEach(obstacle => {
+            // Update position
+            obstacle.position.x += obstacle.movement.direction * obstacle.movement.speed;
+            
+            // Check boundaries and reverse direction
+            if (Math.abs(obstacle.position.x) > obstacle.movement.range) {
+                obstacle.movement.direction *= -1;
+            }
+            
+            // Add some vertical bobbing motion
+            obstacle.position.y = 1 + Math.sin(Date.now() * 0.003) * 0.5;
+        });
     }
 
     // Update the init function
@@ -461,10 +519,6 @@
         winnerDisplay.id = 'winnerDisplay';
         document.body.appendChild(winnerDisplay);
 
-        const speedometer = document.createElement('div');
-        speedometer.id = 'speedometer';
-        document.body.appendChild(speedometer);
-
         // Start animation loop
         animate();
     }
@@ -476,10 +530,10 @@
       requestAnimationFrame(animate);
 
       handleControls();
+      updateMovingObstacles();
       checkCollisions();
       checkFinishLine();
       updateRecords();
-      displaySpeedometer();
 
       // Camera follows the car
       camera.position.x = car.position.x;
