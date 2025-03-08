@@ -6,7 +6,105 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
   <style>
-    body, html { margin: 0; overflow: hidden; height: 100%; }
+    body, html { 
+      margin: 0; 
+      overflow: hidden; 
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    /* Modern UI styling */
+    .game-title {
+      font-size: 4rem;
+      font-weight: 800;
+      background: linear-gradient(45deg, #00ff87, #60efff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-button {
+      background: linear-gradient(45deg, #2193b0, #6dd5ed);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .game-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .game-button.danger {
+      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    }
+
+    .game-button.success {
+      background: linear-gradient(45deg, #00b09b, #96c93d);
+    }
+
+    #recordDisplay {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Roboto Mono', monospace;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #mobileControls {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 1rem;
+    }
+
+    .control-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      color: white;
+      font-size: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .control-button:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Modern modal styling */
+    .modal {
+      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+      color: white;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
     canvas { display: block; }
     #recordDisplay { position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; }
     #winnerDisplay { position: absolute; top: 50px; left: 10px; color: yellow; font-size: 24px; }
@@ -56,15 +154,18 @@
       color: gold;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Roboto+Mono&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-900">
+<body class="bg-gradient-to-br from-gray-900 to-black">
   <div id="intro" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
-    <h1 class="text-4xl text-white font-bold mb-4">Poly Track 3D Racer</h1>
-    <p class="text-lg text-gray-300 mb-8">Race through the poly track and set your best time!</p>
-    <div class="flex space-x-4">
-      <button id="startGameBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Start Game</button>
-      <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Reset Game</button>
-      <button id="controlsBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Controls</button>
+    <div class="glass-panel text-center">
+      <h1 class="game-title mb-6">Poly Track 3D</h1>
+      <p class="text-xl text-gray-300 mb-8">Experience high-speed racing in a stunning polygon world</p>
+      <div class="flex space-x-6">
+        <button id="startGameBtn" class="game-button success">Start Race</button>
+        <button id="resetGameBtn" class="game-button danger">Reset</button>
+        <button id="controlsBtn" class="game-button">Controls</button>
+      </div>
     </div>
   </div>
 
@@ -119,7 +220,7 @@
   <script>
     // Set up scene, camera, and renderer
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -145,13 +246,7 @@
     let currentLevel = 1;
     let movingObstacles = [];
     let score = 0;
-    let levelConfig = {
-        1: { obstacles: 10, movingObstacles: 5, maxSpeed: 0.5 },
-        2: { obstacles: 15, movingObstacles: 8, maxSpeed: 0.6 },
-        3: { obstacles: 20, movingObstacles: 12, maxSpeed: 0.7 },
-        4: { obstacles: 25, movingObstacles: 15, maxSpeed: 0.8 },
-        5: { obstacles: 30, movingObstacles: 20, maxSpeed: 0.9 }
-    };
+    let trackLength = 500;
 
     // Control states for the player
     let moveForward = false;
@@ -160,11 +255,21 @@
 
     // Track Setup
     const trackRadius = 10;
-    const trackLength = 500;  // Make the track longer
     const obstacles = [];
     const speedBoostZones = [];
 
-    // Create track with F1-style materials
+    // Replace the levelConfig object with a function that generates level config
+    function generateLevelConfig(level) {
+        return {
+            obstacles: Math.min(10 + (level * 5), 50), // Increases by 5 each level, max 50
+            movingObstacles: Math.min(5 + (level * 3), 30), // Increases by 3 each level, max 30
+            maxSpeed: Math.min(0.5 + (level * 0.1), 2.0), // Increases by 0.1 each level, max 2.0
+            obstacleSpeed: Math.min(0.1 + (level * 0.05), 0.5), // Increases obstacle speed
+            trackLength: 500 + (level * 100) // Track gets longer each level
+        };
+    }
+
+    // Track Setup
     function createTrack() {
         // Create main track surface
         const geometry = new THREE.PlaneGeometry(trackRadius * 2, trackLength);
@@ -266,7 +371,7 @@
 
     // Create obstacles with boundaries
     function createObstacles() {
-        const config = levelConfig[currentLevel] || levelConfig[1];
+        const config = generateLevelConfig(currentLevel);
         
         // Static obstacles
         for (let i = 0; i < config.obstacles; i++) {
@@ -293,7 +398,7 @@
             
             obstacle.movement = {
                 direction: Math.random() > 0.5 ? 1 : -1,
-                speed: 0.1 + (Math.random() * 0.1 * (currentLevel / 2)), // Speed increases with level
+                speed: config.obstacleSpeed,
                 range: trackRadius * 0.8
             };
             
@@ -302,57 +407,154 @@
         }
     }
 
-    // Enhanced car creation
+    // Update the createCar function with a more complex design
     function createCar(color, startPosX, startPosZ) {
-      const group = new THREE.Group();
+        const group = new THREE.Group();
 
-      // Main body
-      const bodyGeometry = new THREE.BoxGeometry(1, 0.5, 2);
-      const bodyMaterial = new THREE.MeshStandardMaterial({ 
-        color: color,
-        roughness: 0.3,
-        metalness: 0.8
-      });
-      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-      body.castShadow = true;
-      body.position.y = 0.25;
-      group.add(body);
+        // Main body
+        const bodyGeometry = new THREE.BoxGeometry(1.2, 0.4, 2.5);
+        const bodyMaterial = new THREE.MeshPhongMaterial({ 
+            color: color,
+            shininess: 30
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.3;
+        group.add(body);
 
-      // Wheels
-      const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 32);
-      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x202020 });
-      const wheelPositions = [
-        [-0.5, 0, -0.7],
-        [0.5, 0, -0.7],
-        [-0.5, 0, 0.7],
-        [0.5, 0, 0.7]
-      ];
+        // Add cockpit
+        const cockpitGeometry = new THREE.BoxGeometry(0.8, 0.3, 1);
+        const cockpitMaterial = new THREE.MeshPhongMaterial({
+            color: 0x111111,
+            shininess: 90,
+            opacity: 0.7,
+            transparent: true
+        });
+        const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+        cockpit.position.set(0, 0.65, -0.2);
+        group.add(cockpit);
 
-      wheelPositions.forEach(position => {
-        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(...position);
-        wheel.castShadow = true;
-        group.add(wheel);
-      });
+        // Add spoiler
+        const spoilerGeometry = new THREE.BoxGeometry(1.4, 0.1, 0.3);
+        const spoilerMaterial = new THREE.MeshPhongMaterial({
+            color: color,
+            shininess: 30
+        });
+        const spoiler = new THREE.Mesh(spoilerGeometry, spoilerMaterial);
+        spoiler.position.set(0, 0.6, 1);
+        group.add(spoiler);
 
-      group.position.set(startPosX, 0.25, startPosZ);
-      scene.add(group);
-      return group;
+        // Add spoiler supports
+        const supportGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
+        const supportMaterial = new THREE.MeshPhongMaterial({
+            color: 0x333333,
+            shininess: 30
+        });
+        const leftSupport = new THREE.Mesh(supportGeometry, supportMaterial);
+        leftSupport.position.set(-0.6, 0.45, 1);
+        group.add(leftSupport);
+        
+        const rightSupport = new THREE.Mesh(supportGeometry, supportMaterial);
+        rightSupport.position.set(0.6, 0.45, 1);
+        group.add(rightSupport);
+
+        // Front bumper
+        const bumperGeometry = new THREE.BoxGeometry(1.2, 0.2, 0.3);
+        const bumperMaterial = new THREE.MeshPhongMaterial({
+            color: 0x333333,
+            shininess: 30
+        });
+        const frontBumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
+        frontBumper.position.set(0, 0.2, -1.2);
+        group.add(frontBumper);
+
+        // Add wheels with better detail
+        const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 32);
+        const wheelMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x333333,
+            shininess: 30
+        });
+        const hubcapMaterial = new THREE.MeshPhongMaterial({
+            color: 0x888888,
+            shininess: 80
+        });
+
+        const wheelPositions = [
+            [-0.6, 0.3, -0.7],
+            [0.6, 0.3, -0.7],
+            [-0.6, 0.3, 0.7],
+            [0.6, 0.3, 0.7]
+        ];
+
+        wheelPositions.forEach(position => {
+            const wheelGroup = new THREE.Group();
+            
+            // Main wheel
+            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            wheel.rotation.z = Math.PI / 2;
+            wheelGroup.add(wheel);
+
+            // Hubcap
+            const hubcapGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.21, 16);
+            const hubcap = new THREE.Mesh(hubcapGeometry, hubcapMaterial);
+            hubcap.rotation.z = Math.PI / 2;
+            wheelGroup.add(hubcap);
+
+            wheelGroup.position.set(...position);
+            group.add(wheelGroup);
+        });
+
+        // Add headlights
+        const headlightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.1);
+        const headlightMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffcc,
+            shininess: 100,
+            emissive: 0xffffcc,
+            emissiveIntensity: 0.5
+        });
+
+        const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
+        leftHeadlight.position.set(-0.4, 0.3, -1.2);
+        group.add(leftHeadlight);
+
+        const rightHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
+        rightHeadlight.position.set(0.4, 0.3, -1.2);
+        group.add(rightHeadlight);
+
+        // Add taillights
+        const taillightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.1);
+        const taillightMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff0000,
+            shininess: 100,
+            emissive: 0xff0000,
+            emissiveIntensity: 0.5
+        });
+
+        const leftTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
+        leftTaillight.position.set(-0.4, 0.3, 1.2);
+        group.add(leftTaillight);
+
+        const rightTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
+        rightTaillight.position.set(0.4, 0.3, 1.2);
+        group.add(rightTaillight);
+
+        // Position the entire car
+        group.position.set(startPosX, 0.5, startPosZ);
+        scene.add(group);
+        return group;
     }
 
     // Enhanced lighting
     function addLights() {
       // Ambient light
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
       scene.add(ambientLight);
 
-      // Directional light (sun)
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      // Main directional light (sun)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
       dirLight.position.set(100, 100, 50);
       dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 2048;
-      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.mapSize.width = 4096;
+      dirLight.shadow.mapSize.height = 4096;
       dirLight.shadow.camera.near = 1;
       dirLight.shadow.camera.far = 500;
       dirLight.shadow.camera.left = -50;
@@ -361,35 +563,47 @@
       dirLight.shadow.camera.bottom = -50;
       scene.add(dirLight);
 
-      // Add some point lights for atmosphere
-      const pointLight1 = new THREE.PointLight(0x00ff00, 0.5, 20);
-      pointLight1.position.set(0, 5, -trackLength / 4);
-      scene.add(pointLight1);
+      // Add atmospheric lighting
+      const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x404040, 0.6);
+      scene.add(hemisphereLight);
 
-      const pointLight2 = new THREE.PointLight(0x0000ff, 0.5, 20);
-      pointLight2.position.set(0, 5, trackLength / 4);
-      scene.add(pointLight2);
+      // Track spotlights
+      for (let z = -trackLength/2; z < trackLength/2; z += 50) {
+        const spotLight = new THREE.SpotLight(0xFFFFFF, 0.8);
+        spotLight.position.set(trackRadius + 5, 15, z);
+        spotLight.angle = Math.PI / 6;
+        spotLight.penumbra = 0.3;
+        spotLight.decay = 1;
+        spotLight.distance = 30;
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+
+        // Add light on the other side
+        const spotLight2 = spotLight.clone();
+        spotLight2.position.x = -(trackRadius + 5);
+        scene.add(spotLight2);
+      }
     }
 
-    // Handle car movement with friction
+    // Update the handleControls function
     function handleControls() {
-      if (moveForward) {
-        carSpeed = Math.min(carSpeed + carAcceleration, maxSpeed);
-      } else {
-        carSpeed = Math.max(carSpeed * carFriction, 0);
-      }
+        if (moveForward) {
+            carSpeed = Math.min(carSpeed + carAcceleration, maxSpeed);
+        } else {
+            carSpeed = Math.max(carSpeed * carFriction, 0);
+        }
 
-      if (turnLeft) {
-        car.rotation.y += carRotationSpeed;
-      }
+        if (turnLeft) {
+            car.rotation.y += carRotationSpeed;
+        }
 
-      if (turnRight) {
-        car.rotation.y -= carRotationSpeed;
-      }
+        if (turnRight) {
+            car.rotation.y -= carRotationSpeed;
+        }
 
-      // Update car position based on its rotation and speed
-      car.position.x += carSpeed * Math.sin(car.rotation.y);
-      car.position.z += carSpeed * Math.cos(car.rotation.y);
+        // Fix the movement direction by inverting the sin and cos
+        car.position.x -= carSpeed * Math.sin(car.rotation.y);
+        car.position.z -= carSpeed * Math.cos(car.rotation.y);
     }
 
     // Event listener for key controls
@@ -484,7 +698,7 @@
     function resetCar() {
       // Reset to middle of track width, near the start
       car.position.set(0, 0.25, -trackLength/2 + 10);
-      car.rotation.set(0, 0, 0); // Reset rotation
+      car.rotation.set(0, Math.PI, 0); // Rotate 180 degrees around Y axis to face forward
       carSpeed = 0;
       raceStartTime = null; // Reset raceStartTime when the car is reset
     }
@@ -492,18 +706,32 @@
     // Move to the next level
     function nextLevel() {
         currentLevel++;
-        if (currentLevel > Object.keys(levelConfig).length) {
-            // Player has completed all levels
-            gameOver = true;
-            alert('Congratulations! You have completed all levels!');
-            return;
-        }
+        const config = generateLevelConfig(currentLevel);
         
         finishLinePassed = false;
-        maxSpeed = levelConfig[currentLevel].maxSpeed;
+        maxSpeed = config.maxSpeed;
+        trackLength = config.trackLength; // Update track length
+        
         resetCar();
         clearTrack();
         createTrack();
+        
+        // Show level transition message
+        const levelMessage = document.createElement('div');
+        levelMessage.style.position = 'fixed';
+        levelMessage.style.top = '50%';
+        levelMessage.style.left = '50%';
+        levelMessage.style.transform = 'translate(-50%, -50%)';
+        levelMessage.style.background = 'rgba(0, 0, 0, 0.8)';
+        levelMessage.style.color = 'white';
+        levelMessage.style.padding = '20px';
+        levelMessage.style.borderRadius = '10px';
+        levelMessage.style.fontSize = '24px';
+        levelMessage.style.zIndex = '1000';
+        levelMessage.innerHTML = `Level ${currentLevel}`;
+        
+        document.body.appendChild(levelMessage);
+        setTimeout(() => document.body.removeChild(levelMessage), 2000);
     }
 
     // Create a function to display the score in a modal
@@ -520,27 +748,21 @@
         scoreModal.style.textAlign = 'center';
         scoreModal.style.zIndex = '1000';
         
-        const isLastLevel = currentLevel >= Object.keys(levelConfig).length;
-        const nextLevelBtn = isLastLevel ? '' : 
-            `<button id="nextLevelBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">Next Level</button>`;
-        
         scoreModal.innerHTML = `
             <h2 class="text-2xl font-bold mb-4">Level ${currentLevel} Complete!</h2>
             <p class="text-lg mb-4">Your Score: ${score.toFixed(2)}</p>
             <p class="text-lg mb-4">Time: ${((Date.now() - raceStartTime) / 1000).toFixed(2)}s</p>
             <div class="flex justify-center">
-                ${nextLevelBtn}
+                <button id="nextLevelBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">Next Level</button>
                 <button id="retryLevelBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Retry Level</button>
             </div>
         `;
         document.body.appendChild(scoreModal);
 
-        if (!isLastLevel) {
-            document.getElementById('nextLevelBtn').addEventListener('click', () => {
-                document.body.removeChild(scoreModal);
-                nextLevel();
-            });
-        }
+        document.getElementById('nextLevelBtn').addEventListener('click', () => {
+            document.body.removeChild(scoreModal);
+            nextLevel();
+        });
 
         document.getElementById('retryLevelBtn').addEventListener('click', () => {
             document.body.removeChild(scoreModal);
@@ -588,14 +810,22 @@
         // Create scene elements
         createTrack();
         
-        // Position car at the middle of the track width, and near the start
+        // Create and position car at the start of the track, facing forward
         car = createCar(0x00ff00, 0, -trackLength/2 + 10);
+        car.rotation.y = Math.PI; // Make car face forward initially
         
-        // Position camera behind car at start
-        camera.position.set(0, 8, -trackLength/2 - 15);
+        // Adjust camera position to better see the car
+        camera.position.set(0, 5, -trackLength/2 - 5); // Moved camera closer and lower
         camera.lookAt(car.position);
 
-        addLights();
+        // Add ambient light to better see the car
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        // Add directional light
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(0, 10, 0);
+        scene.add(directionalLight);
 
         // Create UI elements
         const recordDisplay = document.createElement('div');
@@ -622,13 +852,12 @@
       checkFinishLine();
       updateRecords();
 
-      // Camera follows the car
+      // Update camera to follow car
       camera.position.x = car.position.x;
-      camera.position.z = car.position.z - 10;  // Adjust this for a better perspective
-      camera.position.y = car.position.y + 5;  // Adjust camera height
+      camera.position.z = car.position.z - 10;
+      camera.position.y = car.position.y + 5;
       camera.lookAt(car.position);
 
-      // Render the scene
       renderer.render(scene, camera);
       displayRecords();
     }
