@@ -216,6 +216,35 @@
     </div>
   </div>
 
+  <div id="settingsMenu" class="modal" style="display: none;">
+    <div class="modal-content glass-panel w-64">
+      <h2 class="text-2xl font-bold mb-4 text-white">Menu</h2>
+      <div class="flex flex-col space-y-4">
+        <button id="rateGameBtn" class="game-button">Rate This Game</button>
+        <button id="settingsOptionsBtn" class="game-button">Settings</button>
+        <button id="closeSettingsMenu" class="game-button danger">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsOptionsModal" class="modal" style="display: none;">
+    <div class="modal-content glass-panel w-64">
+      <h2 class="text-2xl font-bold mb-4 text-white">Settings</h2>
+      <div class="flex flex-col space-y-4">
+        <button id="toggleMusicBtn" class="game-button">
+          <i class="fas fa-music mr-2"></i>
+          <span>Music: Off</span>
+        </button>
+        <button id="closeSettingsOptions" class="game-button danger">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="backgroundMusic" loop>
+    <source src="https://edhb15.github.io/skills-github-pages/New Recording 3.m4a" type="audio/mp4">
+    Your browser does not support the audio element.
+  </audio>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     // Set up scene, camera, and renderer
@@ -884,12 +913,62 @@
     });
 
     // Settings and feedback functionality
+    const settingsMenu = document.getElementById('settingsMenu');
+    const settingsOptionsModal = document.getElementById('settingsOptionsModal');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    let isMusicPlaying = false;
+
     document.getElementById('settingsBtn').addEventListener('click', () => {
+      settingsMenu.style.display = 'flex';
+    });
+
+    document.getElementById('closeSettingsMenu').addEventListener('click', () => {
+      settingsMenu.style.display = 'none';
+    });
+
+    document.getElementById('rateGameBtn').addEventListener('click', () => {
+      settingsMenu.style.display = 'none';
       document.getElementById('feedbackModal').style.display = 'flex';
     });
 
-    document.getElementById('closeFeedback').addEventListener('click', () => {
-      document.getElementById('feedbackModal').style.display = 'none';
+    document.getElementById('settingsOptionsBtn').addEventListener('click', () => {
+      settingsMenu.style.display = 'none';
+      settingsOptionsModal.style.display = 'flex';
+    });
+
+    document.getElementById('closeSettingsOptions').addEventListener('click', () => {
+      settingsOptionsModal.style.display = 'none';
+      settingsMenu.style.display = 'flex';
+    });
+
+    document.getElementById('toggleMusicBtn').addEventListener('click', () => {
+      const toggleBtn = document.getElementById('toggleMusicBtn');
+      const toggleText = toggleBtn.querySelector('span');
+      
+      if (isMusicPlaying) {
+        backgroundMusic.pause();
+        toggleText.textContent = 'Music: Off';
+      } else {
+        backgroundMusic.play()
+          .then(() => {
+            console.log("Audio playback started successfully");
+          })
+          .catch(error => {
+            console.error("Audio playback failed:", error);
+            alert("Failed to play audio. Make sure the audio file exists and is in the correct format.");
+            toggleText.textContent = 'Music: Off';
+            isMusicPlaying = false;
+          });
+        toggleText.textContent = 'Music: On';
+      }
+      
+      isMusicPlaying = !isMusicPlaying;
+    });
+
+    // Add this to check if the audio file loaded correctly
+    backgroundMusic.addEventListener('error', (e) => {
+      console.error('Error loading audio file:', e);
+      alert('Error loading audio file. Please check if the file exists and is in the correct location.');
     });
 
     // Star rating functionality
@@ -959,6 +1038,16 @@
         // Reset button state
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
+      }
+    });
+
+    // Add these to handle closing modals when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === settingsMenu) {
+        settingsMenu.style.display = 'none';
+      }
+      if (event.target === settingsOptionsModal) {
+        settingsOptionsModal.style.display = 'none';
       }
     });
   </script>
