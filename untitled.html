@@ -609,8 +609,8 @@
         }
 
         // Fix the movement direction by inverting the sin and cos
-        car.position.x -= carSpeed * Math.sin(car.rotation.y);
-        car.position.z -= carSpeed * Math.cos(car.rotation.y);
+        car.position.x += carSpeed * Math.sin(car.rotation.y);
+        car.position.z += carSpeed * Math.cos(car.rotation.y);
     }
 
     // Event listener for key controls
