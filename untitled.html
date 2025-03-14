@@ -9,84 +9,134 @@
   <link rel="shortcut icon" href="Screenshot 2025-03-09 at 10.29.33.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
   <style>
+    /* Modern UI styling with enhanced professionalism */
     body, html { 
       margin: 0; 
       overflow: hidden; 
       height: 100%;
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1f25 0%, #0f1318 100%);
     }
     
-    /* Modern UI styling */
     .game-title {
-      font-size: 4rem;
-      font-weight: 800;
-      background: linear-gradient(45deg, #00ff87, #60efff);
+      font-size: 4.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      text-shadow: 0 2px 10px rgba(79,172,254,0.3);
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
     }
 
     .glass-panel {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 2rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 3rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     }
 
     .game-button {
-      background: linear-gradient(45deg, #2193b0, #6dd5ed);
+      position: relative;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 14px 32px;
+      border-radius: 12px;
       color: white;
       font-weight: 600;
-      transition: all 0.3s ease;
+      font-size: 1rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      letter-spacing: 0.05em;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 20px rgba(79,172,254,0.3);
     }
 
-    .game-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    .game-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        #4facfe 0%,
+        #00f2fe 25%,
+        #48c6ef 50%,
+        #4ade80 75%,
+        #22c55e 100%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      transform: translateX(-50%);
     }
 
-    .game-button.danger {
-      background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    .game-button:hover::before {
+      opacity: 1;
     }
 
-    .game-button.success {
-      background: linear-gradient(45deg, #00b09b, #96c93d);
+    .game-button > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-button.danger::before {
+      background: linear-gradient(
+        90deg,
+        #FF416C 0%,
+        #FF4B2B 25%,
+        #FF6B6B 50%,
+        #FFA07A 75%,
+        #FF7F50 100%
+      );
+    }
+
+    .game-button.success::before {
+      background: linear-gradient(
+        90deg,
+        #48c6ef 0%,
+        #6f86d6 25%,
+        #4ade80 50%,
+        #22c55e 75%,
+        #15803d 100%
+      );
     }
 
     #recordDisplay {
-      background: rgba(0, 0, 0, 0.7);
-      padding: 1rem;
-      border-radius: 8px;
-      font-family: 'Roboto Mono', monospace;
-      backdrop-filter: blur(5px);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 1.25rem 1.5rem;
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 0.9rem;
+      letter-spacing: -0.02em;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
 
     #mobileControls {
-      backdrop-filter: blur(10px);
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 16px;
-      padding: 1rem;
+      backdrop-filter: blur(20px);
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .control-button {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       border: none;
       background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(10px);
       color: white;
       font-size: 1.5rem;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
 
     .control-button:active {
@@ -96,16 +146,72 @@
 
     /* Modern modal styling */
     .modal {
-      backdrop-filter: blur(8px);
-      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(15px);
+      background: rgba(0, 0, 0, 0.7);
     }
 
     .modal-content {
-      background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+      background: linear-gradient(135deg, #1a1f25 0%, #0f1318 100%);
       color: white;
-      border-radius: 16px;
+      border-radius: 24px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      padding: 2rem;
+    }
+
+    /* Settings button styling */
+    #settingsBtn {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    #settingsBtn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Feedback modal styling */
+    #feedbackContent {
+      background: linear-gradient(135deg, #1a1f25 0%, #0f1318 100%);
+      color: white;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+    }
+
+    .star {
+      font-size: 28px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .star:hover {
+      color: #ffd700;
+    }
+
+    .star.active {
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    }
+
+    textarea {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: white;
+      padding: 1rem;
+      font-family: 'Inter', sans-serif;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: rgba(79,172,254,0.5);
+      box-shadow: 0 0 0 2px rgba(79,172,254,0.2);
     }
 
     canvas { display: block; }
@@ -133,31 +239,16 @@
       z-index: 2000;
     }
     
-    #feedbackContent {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 80%;
-      max-width: 500px;
-    }
-    
     .rating {
       display: flex;
       justify-content: center;
       gap: 10px;
       margin: 20px 0;
     }
-    
-    .star {
-      font-size: 24px;
-      cursor: pointer;
-    }
-    
-    .star.active {
-      color: gold;
-    }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/loaders/OBJLoader.js"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-black">
   <div id="intro" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
@@ -165,9 +256,15 @@
       <h1 class="game-title mb-6">Poly Track 3D</h1>
       <p class="text-xl text-gray-300 mb-8">Experience high-speed racing in a stunning polygon world</p>
       <div class="flex space-x-6">
-        <button id="startGameBtn" class="game-button success">Start Race</button>
-        <button id="resetGameBtn" class="game-button danger">Reset</button>
-        <button id="controlsBtn" class="game-button">Controls</button>
+        <button id="startGameBtn" class="game-button success">
+            <span>Start Race</span>
+        </button>
+        <button id="resetGameBtn" class="game-button danger">
+            <span>Reset</span>
+        </button>
+        <button id="controlsBtn" class="game-button">
+            <span>Controls</span>
+        </button>
       </div>
     </div>
   </div>
@@ -248,7 +345,10 @@
     Your browser does not support the audio element.
   </audio>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <div class="credit" style="position: absolute; bottom: 10px; left: 10px; color: white; font-size: 14px;">
+    Model by <a href="https://ke.linkedin.com/in/kimani-bob-51a55934" target="_blank" style="color: #00f;">Bob Kimani</a>
+  </div>
+
   <script>
     // Set up scene, camera, and renderer
     const scene = new THREE.Scene();
@@ -439,140 +539,22 @@
         }
     }
 
-    // Update the createCar function with a more complex design
+    // Replace the existing createCar function with this
     function createCar(color, startPosX, startPosZ) {
-        const group = new THREE.Group();
-
-        // Main body
-        const bodyGeometry = new THREE.BoxGeometry(1.2, 0.4, 2.5);
-        const bodyMaterial = new THREE.MeshPhongMaterial({ 
-            color: color,
-            shininess: 30
+        const loader = new THREE.OBJLoader();
+        loader.load('https://raw.githubusercontent.com/username/repository-name/main/bugati.obj', (object) => {
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.color.set(color); // Set the color of the car
+                }
+            });
+            object.position.set(startPosX, 0.5, startPosZ);
+            object.rotation.y = Math.PI; // Make car face forward initially
+            scene.add(object);
+            car = object; // Store the car reference
+        }, undefined, (error) => {
+            console.error('An error happened while loading the car model:', error);
         });
-        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 0.3;
-        group.add(body);
-
-        // Add cockpit
-        const cockpitGeometry = new THREE.BoxGeometry(0.8, 0.3, 1);
-        const cockpitMaterial = new THREE.MeshPhongMaterial({
-            color: 0x111111,
-            shininess: 90,
-            opacity: 0.7,
-            transparent: true
-        });
-        const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
-        cockpit.position.set(0, 0.65, -0.2);
-        group.add(cockpit);
-
-        // Add spoiler
-        const spoilerGeometry = new THREE.BoxGeometry(1.4, 0.1, 0.3);
-        const spoilerMaterial = new THREE.MeshPhongMaterial({
-            color: color,
-            shininess: 30
-        });
-        const spoiler = new THREE.Mesh(spoilerGeometry, spoilerMaterial);
-        spoiler.position.set(0, 0.6, 1);
-        group.add(spoiler);
-
-        // Add spoiler supports
-        const supportGeometry = new THREE.BoxGeometry(0.1, 0.3, 0.1);
-        const supportMaterial = new THREE.MeshPhongMaterial({
-            color: 0x333333,
-            shininess: 30
-        });
-        const leftSupport = new THREE.Mesh(supportGeometry, supportMaterial);
-        leftSupport.position.set(-0.6, 0.45, 1);
-        group.add(leftSupport);
-        
-        const rightSupport = new THREE.Mesh(supportGeometry, supportMaterial);
-        rightSupport.position.set(0.6, 0.45, 1);
-        group.add(rightSupport);
-
-        // Front bumper
-        const bumperGeometry = new THREE.BoxGeometry(1.2, 0.2, 0.3);
-        const bumperMaterial = new THREE.MeshPhongMaterial({
-            color: 0x333333,
-            shininess: 30
-        });
-        const frontBumper = new THREE.Mesh(bumperGeometry, bumperMaterial);
-        frontBumper.position.set(0, 0.2, -1.2);
-        group.add(frontBumper);
-
-        // Add wheels with better detail
-        const wheelGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 32);
-        const wheelMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x333333,
-            shininess: 30
-        });
-        const hubcapMaterial = new THREE.MeshPhongMaterial({
-            color: 0x888888,
-            shininess: 80
-        });
-
-        const wheelPositions = [
-            [-0.6, 0.3, -0.7],
-            [0.6, 0.3, -0.7],
-            [-0.6, 0.3, 0.7],
-            [0.6, 0.3, 0.7]
-        ];
-
-        wheelPositions.forEach(position => {
-            const wheelGroup = new THREE.Group();
-            
-            // Main wheel
-            const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-            wheel.rotation.z = Math.PI / 2;
-            wheelGroup.add(wheel);
-
-            // Hubcap
-            const hubcapGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.21, 16);
-            const hubcap = new THREE.Mesh(hubcapGeometry, hubcapMaterial);
-            hubcap.rotation.z = Math.PI / 2;
-            wheelGroup.add(hubcap);
-
-            wheelGroup.position.set(...position);
-            group.add(wheelGroup);
-        });
-
-        // Add headlights
-        const headlightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.1);
-        const headlightMaterial = new THREE.MeshPhongMaterial({
-            color: 0xffffcc,
-            shininess: 100,
-            emissive: 0xffffcc,
-            emissiveIntensity: 0.5
-        });
-
-        const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-        leftHeadlight.position.set(-0.4, 0.3, -1.2);
-        group.add(leftHeadlight);
-
-        const rightHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-        rightHeadlight.position.set(0.4, 0.3, -1.2);
-        group.add(rightHeadlight);
-
-        // Add taillights
-        const taillightGeometry = new THREE.BoxGeometry(0.2, 0.1, 0.1);
-        const taillightMaterial = new THREE.MeshPhongMaterial({
-            color: 0xff0000,
-            shininess: 100,
-            emissive: 0xff0000,
-            emissiveIntensity: 0.5
-        });
-
-        const leftTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
-        leftTaillight.position.set(-0.4, 0.3, 1.2);
-        group.add(leftTaillight);
-
-        const rightTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
-        rightTaillight.position.set(0.4, 0.3, 1.2);
-        group.add(rightTaillight);
-
-        // Position the entire car
-        group.position.set(startPosX, 0.5, startPosZ);
-        scene.add(group);
-        return group;
     }
 
     // Enhanced lighting
@@ -1052,6 +1034,22 @@
       if (event.target === settingsOptionsModal) {
         settingsOptionsModal.style.display = 'none';
       }
+    });
+
+    // Add this JavaScript after your existing scripts
+    document.querySelectorAll('.game-button').forEach(button => {
+        button.addEventListener('mousemove', (e) => {
+            const rect = button.getBoundingClientRect();
+            const x = e.clientX - rect.left; // Get cursor x position within button
+            const percentage = x / rect.width; // Calculate percentage across button width
+            
+            // Move gradient based on cursor position
+            button.style.setProperty('--hover-position', `${-50 + (percentage * 100)}%`);
+        });
+
+        button.addEventListener('mouseleave', () => {
+            button.style.setProperty('--hover-position', '-50%');
+        });
     });
   </script>
 </body>
