@@ -543,7 +543,7 @@
         loader.load('uploads_files_2792345_Koenigsegg.obj', (object) => {
             object.position.set(startPosX, 0.5, startPosZ);
             object.scale.set(0.2, 0.2, 0.2); // Adjust scale to make the car smaller
-            object.rotation.y = Math.PI; // Adjust rotation to face forward (180 degrees)
+            object.rotation.y =0; // Adjust rotation to face forward (180 degrees)
             scene.add(object);
             car = object; // Set the car variable to the loaded model
         }, undefined, (error) => {
