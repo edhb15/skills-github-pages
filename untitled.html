@@ -537,55 +537,17 @@
         }
     }
 
-    // Replace the existing createCar function with this new implementation
-    function createCar(color, startPosX, startPosZ) {
-        // Create the main body of the car
-        const carBodyGeometry = new THREE.BoxGeometry(1.5, 0.5, 3);
-        const carBodyMaterial = new THREE.MeshBasicMaterial({ color: color });
-        const carBody = new THREE.Mesh(carBodyGeometry, carBodyMaterial);
-        carBody.position.set(startPosX, 0.5, startPosZ);
-        scene.add(carBody);
-
-        // Create the roof of the car
-        const roofGeometry = new THREE.BoxGeometry(0.8, 0.3, 1.5);
-        const roofMaterial = new THREE.MeshBasicMaterial({ color: color });
-        const carRoof = new THREE.Mesh(roofGeometry, roofMaterial);
-        carRoof.position.set(startPosX, 0.9, startPosZ);
-        scene.add(carRoof);
-
-        // Create headlights
-        const headlightGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-        const headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
-        leftHeadlight.position.set(-0.7, 0.4, 1.5);
-        scene.add(leftHeadlight);
-
-        const rightHeadlight = leftHeadlight.clone();
-        rightHeadlight.position.x = 0.7;
-        scene.add(rightHeadlight);
-
-        // Create wheels
-        const wheelGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 32);
-        const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
-
-        const frontLeftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
-        frontLeftWheel.position.set(-0.6, 0.25, 1.4);
-        frontLeftWheel.rotation.z = Math.PI / 2; // Rotate to make it horizontal
-        scene.add(frontLeftWheel);
-
-        const frontRightWheel = frontLeftWheel.clone();
-        frontRightWheel.position.x = 0.6;
-        scene.add(frontRightWheel);
-
-        const backLeftWheel = frontLeftWheel.clone();
-        backLeftWheel.position.z = -1.4;
-        scene.add(backLeftWheel);
-
-        const backRightWheel = frontRightWheel.clone();
-        backRightWheel.position.z = -1.4;
-        scene.add(backRightWheel);
-
-        return carBody; // Return the car body
+    // Add a new function to load the car model
+    function loadCarModel(startPosX, startPosZ) {
+        const loader = new THREE.OBJLoader();
+        loader.load('uploads_files_2792345_Koenigsegg.obj', (object) => {
+            object.position.set(startPosX, 0.5, startPosZ);
+            object.scale.set(0.5, 0.5, 0.5); // Adjust scale as needed
+            scene.add(object);
+            car = object; // Set the car variable to the loaded model
+        }, undefined, (error) => {
+            console.error('An error happened while loading the car model:', error);
+        });
     }
 
     // Enhanced lighting
@@ -855,13 +817,11 @@
         // Create scene elements
         createTrack();
         
-        // Create and position car at the start of the track, facing forward
-        car = createCar(0x00ff00, 0, -trackLength/2 + 10);
-        car.rotation.y = Math.PI; // Make car face forward initially
-        
+        // Load the car model at the start of the track, facing forward
+        loadCarModel(0, -trackLength/2 + 10);
         // Adjust camera position to better see the car
         camera.position.set(0, 5, -trackLength/2 - 5); // Moved camera closer and lower
-        camera.lookAt(car.position);
+        camera.lookAt(new THREE.Vector3(0, 0.5, -trackLength/2 + 10)); // Adjusted to look at the car's position
 
         // Add ambient light to better see the car
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
