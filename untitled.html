@@ -539,22 +539,17 @@
         }
     }
 
-    // Replace the existing createCar function with this
+    // Replace the existing createCar function with this placeholder
     function createCar(color, startPosX, startPosZ) {
-        const loader = new THREE.OBJLoader();
-        loader.load('https://raw.githubusercontent.com/username/repository-name/main/bugati.obj', (object) => {
-            object.traverse((child) => {
-                if (child.isMesh) {
-                    child.material.color.set(color); // Set the color of the car
-                }
-            });
-            object.position.set(startPosX, 0.5, startPosZ);
-            object.rotation.y = Math.PI; // Make car face forward initially
-            scene.add(object);
-            car = object; // Store the car reference
-        }, undefined, (error) => {
-            console.error('An error happened while loading the car model:', error);
-        });
+        // Placeholder for car creation logic
+        console.log("Car creation logic goes here.");
+        // You can add simple geometry for a placeholder car if needed
+        // const geometry = new THREE.BoxGeometry(1, 0.5, 2);
+        // const material = new THREE.MeshBasicMaterial({ color: color });
+        // const carMesh = new THREE.Mesh(geometry, material);
+        // carMesh.position.set(startPosX, 0.5, startPosZ);
+        // scene.add(carMesh);
+        // car = carMesh; // Store the car reference
     }
 
     // Enhanced lighting
