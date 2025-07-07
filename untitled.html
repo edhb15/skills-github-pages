@@ -251,6 +251,17 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-black">
+  <!-- Version Selection Modal -->
+  <div id="versionModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:3000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;">
+    <div class="glass-panel text-center" style="min-width:320px;max-width:90vw;">
+      <h2 class="text-3xl font-bold mb-6">Select Game Version</h2>
+      <div class="flex flex-col space-y-4">
+        <button id="v1Btn" class="game-button danger">v1.0 (Classic)</button>
+        <button id="v2Btn" class="game-button success">v2.0 (Modern)</button>
+      </div>
+    </div>
+  </div>
+
   <div id="intro" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
     <div class="glass-panel text-center">
       <h1 class="game-title mb-6">Poly Track 3D</h1>
@@ -344,8 +355,6 @@
     <source src="https://edhb15.github.io/skills-github-pages/New Recording 3.m4a" type="audio/mp4">
     Your browser does not support the audio element.
   </audio>
-
-  
 
   <script>
     // Set up scene, camera, and renderer
@@ -1043,6 +1052,20 @@
             button.style.setProperty('--hover-position', '-50%');
         });
     });
+
+    // Version selection logic
+    const versionModal = document.getElementById('versionModal');
+    const v1Btn = document.getElementById('v1Btn');
+    const v2Btn = document.getElementById('v2Btn');
+    v1Btn.addEventListener('click', () => {
+      window.location.href = 'v1.html';
+    });
+    v2Btn.addEventListener('click', () => {
+      versionModal.style.display = 'none';
+      document.getElementById('intro').style.display = '';
+    });
+    // Hide intro until version is selected
+    document.getElementById('intro').style.display = 'none';
   </script>
 </body>
 </html>

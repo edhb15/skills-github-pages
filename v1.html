@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poly Track 3D Racer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+  <style>
+    body, html { margin: 0; overflow: hidden; height: 100%; }
+    canvas { display: block; }
+    #recordDisplay { position: absolute; top: 10px; left: 10px; color: white; font-size: 18px; }
+    #winnerDisplay { position: absolute; top: 50px; left: 10px; color: yellow; font-size: 24px; }
+    #controlsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; }
+    #controlsModalContent { background: white; padding: 20px; border-radius: 8px; text-align: center; }
+    #settingsBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+    
+    #feedbackModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    
+    #feedbackContent {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+    }
+    
+    .rating {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    
+    .star {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .star.active {
+      color: gold;
+    }
+  </style>
+</head>
+<body class="bg-gray-900">
+  <div id="intro" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+    <h1 class="text-4xl text-white font-bold mb-4">Poly Track 3D Racer</h1>
+    <p class="text-lg text-gray-300 mb-8">Race through the poly track and set your best time!</p>
+    <div class="flex space-x-4">
+      <button id="startGameBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Start Game</button>
+      <button id="resetGameBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Reset Game</button>
+      <button id="controlsBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Controls</button>
+    </div>
+  </div>
+
+  <div id="mobileControls" class="absolute bottom-0 left-0 w-full flex justify-center space-x-4 p-4">
+    <button id="turnLeftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-left"></i></button>
+    <button id="moveForwardBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"><i class="fas fa-arrow-up"></i></button>
+    <button id="turnRightBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"><i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <div id="controlsModal" class="flex">
+    <div id="controlsModalContent">
+      <h2 class="text-2xl font-bold mb-4">Controls</h2>
+      <p class="text-lg mb-4">Mobile:</p>
+      <ul class="text-left mb-4">
+        <li><i class="fas fa-arrow-up"></i> Move Forward</li>
+        <li><i class="fas fa-arrow-left"></i> Turn Left</li>
+        <li><i class="fas fa-arrow-right"></i> Turn Right</li>
+      </ul>
+      <p class="text-lg mb-4">Keyboard:</p>
+      <ul class="text-left mb-4">
+        <li>W - Move Forward</li>
+        <li>A - Turn Left</li>
+        <li>D - Turn Right</li>
+      </ul>
+      <button id="closeControlsBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Close</button>
+    </div>
+  </div>
+
+  <button id="settingsBtn" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+    <i class="fas fa-cog"></i>
+  </button>
+
+  <div id="feedbackModal" class="flex">
+    <div id="feedbackContent">
+      <h2 class="text-2xl font-bold mb-4">Game Feedback</h2>
+      <div class="rating">
+        <span class="star" data-rating="1">★</span>
+        <span class="star" data-rating="2">★</span>
+        <span class="star" data-rating="3">★</span>
+        <span class="star" data-rating="4">★</span>
+        <span class="star" data-rating="5">★</span>
+      </div>
+      <textarea id="feedbackText" class="w-full h-32 p-2 border rounded mb-4" placeholder="What needs to be improved?"></textarea>
+      <div class="flex justify-end space-x-2">
+        <button id="submitFeedback" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Submit</button>
+        <button id="closeFeedback" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+   // Set up scene, camera, and renderer
+   const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Add fog to the scene for depth
+    scene.fog = new THREE.Fog(0x000000, 1, 1000);
+    scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+
+    // Game Variables
+    let car;
+    let carSpeed = 0;
+    let maxSpeed = 0.5;
+    let carRotationSpeed = 0.05;
+    let carAcceleration = 0.05;
+    let carFriction = 0.98;
+    let finishLinePassed = false;
+    let raceStartTime = null;
+    let bestTime = null;
+    let lapCount = 0;
+    let gameOver = false;
+    let currentLevel = 1;
+    let movingObstacles = [];
+
+    // Control states for the player
+    let moveForward = false;
+    let turnLeft = false;
+    let turnRight = false;
+
+    // Track Setup
+    const trackRadius = 10;
+    const trackLength = 500;  // Make the track longer
+    const obstacles = [];
+    const speedBoostZones = [];
+
+    // Create track with F1-style materials
+    function createTrack() {
+        // Create main track surface
+        const geometry = new THREE.PlaneGeometry(trackRadius * 2, trackLength);
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0x404040,  // Darker gray
+            shininess: 10,
+            specular: 0x333333
+        });
+        
+        const trackMesh = new THREE.Mesh(geometry, material);
+        trackMesh.rotation.x = -Math.PI / 2;
+        trackMesh.position.y = 0;
+        trackMesh.position.z = 0;
+        trackMesh.receiveShadow = true;
+        scene.add(trackMesh);
+
+        // Add track markings (white lines)
+        const lineGeometry = new THREE.PlaneGeometry(0.3, trackLength);
+        const lineMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff
+        });
+
+        // Left track marking
+        const leftLine = new THREE.Mesh(lineGeometry, lineMaterial);
+        leftLine.rotation.x = -Math.PI / 2;
+        leftLine.position.set(-trackRadius * 0.7, 0.01, 0);
+        scene.add(leftLine);
+
+        // Right track marking
+        const rightLine = new THREE.Mesh(lineGeometry, lineMaterial);
+        rightLine.rotation.x = -Math.PI / 2;
+        rightLine.position.set(trackRadius * 0.7, 0.01, 0);
+        scene.add(rightLine);
+
+        // Add track kerbs (red and white stripes)
+        const kerbGeometry = new THREE.BoxGeometry(1, 0.2, trackLength);
+        const kerbMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                stripeWidth: { value: 2.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec2 vUv;
+                uniform float stripeWidth;
+                void main() {
+                    float stripe = mod(vUv.y * 50.0, stripeWidth);
+                    if(stripe < stripeWidth/2.0) {
+                        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Red
+                    } else {
+                        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // White
+                    }
+                }
+            `
+        });
+
+        // Left kerb
+        const leftKerb = new THREE.Mesh(kerbGeometry, kerbMaterial);
+        leftKerb.position.set(-trackRadius - 0.5, 0.1, 0);
+        scene.add(leftKerb);
+
+        // Right kerb
+        const rightKerb = new THREE.Mesh(kerbGeometry, kerbMaterial);
+        rightKerb.position.set(trackRadius + 0.5, 0.1, 0);
+        scene.add(rightKerb);
+
+        // Create finish line
+        const finishLineGeometry = new THREE.PlaneGeometry(trackRadius * 2, 4);
+        const finishLineMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const finishLine = new THREE.Mesh(finishLineGeometry, finishLineMaterial);
+        finishLine.rotation.x = -Math.PI / 2;
+        finishLine.position.set(0, 0.02, trackLength / 2);
+        scene.add(finishLine);
+
+        // Create speed boost zones and obstacles
+        createSpeedBoostZones();
+        createObstacles();
+    }
+
+    // Create speed boost zone
+    function createSpeedBoostZone(x, z) {
+      const geometry = new THREE.BoxGeometry(2, 0.1, 2);
+      const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+      const boostZone = new THREE.Mesh(geometry, material);
+      boostZone.position.set(x, 0.1, z);
+      scene.add(boostZone);
+      speedBoostZones.push(boostZone);
+    }
+
+    // Create obstacles with boundaries
+    function createObstacles() {
+        // Static obstacles
+        const numberOfObstacles = 15; // Reduced number of static obstacles
+        
+        for (let i = 0; i < numberOfObstacles; i++) {
+            const z = (-trackLength/2) + (trackLength * (i / numberOfObstacles)) + 20;
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
+            
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+            const obstacle = new THREE.Mesh(geometry, material);
+            obstacle.position.set(x, 1, z);
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        // Moving obstacles
+        const numberOfMovingObstacles = 10;
+        
+        for (let i = 0; i < numberOfMovingObstacles; i++) {
+            const z = (-trackLength/2) + (trackLength * (i / numberOfMovingObstacles)) + 20;
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
+            
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for moving obstacles
+            const obstacle = new THREE.Mesh(geometry, material);
+            obstacle.position.set(x, 1, z);
+            
+            // Add movement properties
+            obstacle.movement = {
+                direction: Math.random() > 0.5 ? 1 : -1, // Random initial direction
+                speed: 0.1 + Math.random() * 0.1, // Random speed between 0.1 and 0.2
+                range: trackRadius * 0.8 // Movement range
+            };
+            
+            scene.add(obstacle);
+            movingObstacles.push(obstacle);
+        }
+    }
+
+    // Enhanced car creation
+    function createCar(color, startPosX, startPosZ) {
+      const group = new THREE.Group();
+
+      // Main body
+      const bodyGeometry = new THREE.BoxGeometry(1, 0.5, 2);
+      const bodyMaterial = new THREE.MeshStandardMaterial({ 
+        color: color,
+        roughness: 0.3,
+        metalness: 0.8
+      });
+      const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+      body.castShadow = true;
+      body.position.y = 0.25;
+      group.add(body);
+
+      // Wheels
+      const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 32);
+      const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x202020 });
+      const wheelPositions = [
+        [-0.5, 0, -0.7],
+        [0.5, 0, -0.7],
+        [-0.5, 0, 0.7],
+        [0.5, 0, 0.7]
+      ];
+
+      wheelPositions.forEach(position => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(...position);
+        wheel.castShadow = true;
+        group.add(wheel);
+      });
+
+      group.position.set(startPosX, 0.25, startPosZ);
+      scene.add(group);
+      return group;
+    }
+
+    // Enhanced lighting
+    function addLights() {
+      // Ambient light
+      const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+      scene.add(ambientLight);
+
+      // Directional light (sun)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(100, 100, 50);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 1;
+      dirLight.shadow.camera.far = 500;
+      dirLight.shadow.camera.left = -50;
+      dirLight.shadow.camera.right = 50;
+      dirLight.shadow.camera.top = 50;
+      dirLight.shadow.camera.bottom = -50;
+      scene.add(dirLight);
+
+      // Add some point lights for atmosphere
+      const pointLight1 = new THREE.PointLight(0x00ff00, 0.5, 20);
+      pointLight1.position.set(0, 5, -trackLength / 4);
+      scene.add(pointLight1);
+
+      const pointLight2 = new THREE.PointLight(0x0000ff, 0.5, 20);
+      pointLight2.position.set(0, 5, trackLength / 4);
+      scene.add(pointLight2);
+    }
+
+    // Handle car movement with friction
+    function handleControls() {
+      if (moveForward) {
+        carSpeed = Math.min(carSpeed + carAcceleration, maxSpeed);
+      } else {
+        carSpeed = Math.max(carSpeed * carFriction, 0);
+      }
+
+      if (turnLeft) {
+        car.rotation.y += carRotationSpeed;
+      }
+
+      if (turnRight) {
+        car.rotation.y -= carRotationSpeed;
+      }
+
+      // Update car position based on its rotation and speed
+      car.position.x += carSpeed * Math.sin(car.rotation.y);
+      car.position.z += carSpeed * Math.cos(car.rotation.y);
+    }
+
+    // Event listener for key controls
+    function handleKeyDown(event) {
+      if (event.key === 'w') moveForward = true; // Move Forward
+      if (event.key === 'a') turnLeft = true; // Turn Left
+      if (event.key === 'd') turnRight = true; // Turn Right
+    }
+
+    function handleKeyUp(event) {
+      if (event.key === 'w') moveForward = false; // Stop Moving Forward
+      if (event.key === 'a') turnLeft = false; // Stop Turning Left
+      if (event.key === 'd') turnRight = false; // Stop Turning Right
+    }
+
+    // Add event listeners for key down/up
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    // Mobile controls event listeners
+    document.getElementById('moveForwardBtn').addEventListener('mousedown', () => moveForward = true);
+    document.getElementById('moveForwardBtn').addEventListener('mouseup', () => moveForward = false);
+    document.getElementById('moveForwardBtn').addEventListener('touchstart', () => moveForward = true);
+    document.getElementById('moveForwardBtn').addEventListener('touchend', () => moveForward = false);
+
+    document.getElementById('turnLeftBtn').addEventListener('mousedown', () => turnLeft = true);
+    document.getElementById('turnLeftBtn').addEventListener('mouseup', () => turnLeft = false);
+    document.getElementById('turnLeftBtn').addEventListener('touchstart', () => turnLeft = true);
+    document.getElementById('turnLeftBtn').addEventListener('touchend', () => turnLeft = false);
+
+    document.getElementById('turnRightBtn').addEventListener('mousedown', () => turnRight = true);
+    document.getElementById('turnRightBtn').addEventListener('mouseup', () => turnRight = false);
+    document.getElementById('turnRightBtn').addEventListener('touchstart', () => turnRight = true);
+    document.getElementById('turnRightBtn').addEventListener('touchend', () => turnRight = false);
+
+    // Check collisions with obstacles
+    function checkCollisions() {
+      [...obstacles, ...movingObstacles].forEach((obstacle) => {
+        if (car.position.distanceTo(obstacle.position) < 2) {
+          resetCar();
+        }
+      });
+
+      speedBoostZones.forEach((zone) => {
+        if (car.position.distanceTo(zone.position) < 3) {
+          carSpeed = Math.min(carSpeed * 1.5, maxSpeed);
+        }
+      });
+
+      // Check if car goes outside track boundaries
+      if (Math.abs(car.position.x) > trackRadius) {
+        resetCar();
+      }
+    }
+
+    // Check finish line and update records
+    function checkFinishLine() {
+      if (!finishLinePassed && car.position.z > trackLength / 2) {
+        finishLinePassed = true;
+        raceStartTime = Date.now();
+        lapCount++;
+        nextLevel();
+      }
+    }
+
+    // Update records
+    function updateRecords() {
+      if (finishLinePassed) {
+        const raceTime = (Date.now() - raceStartTime) / 1000;
+        if (!bestTime || raceTime < bestTime) {
+          bestTime = raceTime;
+        }
+      }
+    }
+
+    // Display records
+    function displayRecords() {
+      const recordText = `Best Time: ${bestTime ? bestTime.toFixed(2) : 'N/A'}s | Laps: ${lapCount} | Level: ${currentLevel}`;
+      document.getElementById('recordDisplay').innerText = recordText;
+    }
+
+    // Display speedometer
+    function displaySpeedometer() {
+      const speedKmh = (carSpeed / maxSpeed) * 200; // Convert to km/h
+      const speedText = `Speed: ${speedKmh.toFixed(2)} km/h`;
+      document.getElementById('speedometer').innerText = speedText;
+    }
+
+    // Reset car position and speed
+    function resetCar() {
+      // Reset to middle of track width, near the start
+      car.position.set(0, 0.25, -trackLength/2 + 10);
+      car.rotation.set(0, 0, 0); // Reset rotation
+      carSpeed = 0;
+    }
+
+    // Move to the next level
+    function nextLevel() {
+      currentLevel++;
+      finishLinePassed = false;
+      resetCar();
+      clearTrack();
+      createTrack();
+    }
+
+    // Clear the track
+    function clearTrack() {
+      obstacles.forEach(obstacle => scene.remove(obstacle));
+      movingObstacles.forEach(obstacle => scene.remove(obstacle));
+      speedBoostZones.forEach(zone => scene.remove(zone));
+      obstacles.length = 0;
+      movingObstacles.length = 0;
+      speedBoostZones.length = 0;
+    }
+
+    // Add these functions before init()
+    function createSpeedBoostZones() {
+        // Add speed boost zones at regular intervals
+        for (let z = -trackLength/2; z < trackLength/2; z += 50) {
+            const x = (Math.random() - 0.5) * (trackRadius * 1.5);
+            createSpeedBoostZone(x, z);
+        }
+    }
+
+    // Add this new function to update moving obstacles
+    function updateMovingObstacles() {
+        movingObstacles.forEach(obstacle => {
+            // Update position
+            obstacle.position.x += obstacle.movement.direction * obstacle.movement.speed;
+            
+            // Check boundaries and reverse direction
+            if (Math.abs(obstacle.position.x) > obstacle.movement.range) {
+                obstacle.movement.direction *= -1;
+            }
+            
+            // Add some vertical bobbing motion
+            obstacle.position.y = 1 + Math.sin(Date.now() * 0.003) * 0.5;
+        });
+    }
+
+    // Update the init function
+    function init() {
+        // Create scene elements
+        createTrack();
+        
+        // Position car at the middle of the track width, and near the start
+        car = createCar(0x00ff00, 0, -trackLength/2 + 10);
+        
+        // Position camera behind car at start
+        camera.position.set(0, 8, -trackLength/2 - 15);
+        camera.lookAt(car.position);
+
+        addLights();
+
+        // Create UI elements
+        const recordDisplay = document.createElement('div');
+        recordDisplay.id = 'recordDisplay';
+        document.body.appendChild(recordDisplay);
+
+        const winnerDisplay = document.createElement('div');
+        winnerDisplay.id = 'winnerDisplay';
+        document.body.appendChild(winnerDisplay);
+
+        const speedometer = document.createElement('div');
+        speedometer.id = 'speedometer';
+        document.body.appendChild(speedometer);
+
+        // Start animation loop
+        animate();
+    }
+
+    // Animation loop
+    function animate() {
+      if (gameOver) return;
+
+      requestAnimationFrame(animate);
+
+      handleControls();
+      updateMovingObstacles();
+      checkCollisions();
+      checkFinishLine();
+      updateRecords();
+      displaySpeedometer();
+
+      // Camera follows the car
+      camera.position.x = car.position.x;
+      camera.position.z = car.position.z - 10;  // Adjust this for a better perspective
+      camera.position.y = car.position.y + 5;  // Adjust camera height
+      camera.lookAt(car.position);
+
+      // Render the scene
+      renderer.render(scene, camera);
+      displayRecords();
+    }
+
+    // Start game button event listener
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      document.getElementById('intro').style.display = 'none';
+      init();
+    });
+
+    // Reset game button event listener
+    document.getElementById('resetGameBtn').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // Controls button event listener
+    document.getElementById('controlsBtn').addEventListener('click', () => {
+      document.getElementById('controlsModal').style.display = 'flex';
+    });
+
+    // Close controls modal event listener
+    document.getElementById('closeControlsBtn').addEventListener('click', () => {
+      document.getElementById('controlsModal').style.display = 'none';
+    });
+  </script>
+</body>
+</html> 
